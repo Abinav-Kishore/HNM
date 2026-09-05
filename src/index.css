@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", "Noto Serif JP", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-anime: "Shojumaru", "Dela Gothic One", cursive;
+
+  /* Isshoni Nihongo Main Club (White / Cream Theme) */
+  --color-brand-cream: #FBF9F5;
+  --color-brand-dark: #1C1917;
+  --color-brand-red: #DC2626;
+  --color-brand-dark-blue: #1E293B;
+  --color-brand-gray: #78716C;
+  --color-card-green: #166534;
+  --color-card-orange: #C05621;
+  --color-card-blue: #1E40AF;
+  --color-bg-secondary: #F5F2EB;
+
+  /* Authentic Japanese Matsuri & HNM Festival Theme Palette (Striking Red & Black Theme) */
+  --color-matsuri-night: #08080A;
+  --color-matsuri-indigo: #121217;
+  --color-matsuri-indigo-light: #1C1C24;
+  --color-matsuri-plum: #170F13;
+  --color-matsuri-card: #121217;
+  --color-matsuri-card-hover: #1E1E26;
+  --color-matsuri-vermilion: #EF4444;  /* Radiant Crimson Red */
+  --color-matsuri-vermilion-bright: #F87171;
+  --color-matsuri-gold: #DC2626;       /* Deep Scarlet Red */
+  --color-matsuri-gold-light: #FCA5A5;
+  --color-matsuri-wisteria: #E11D48;
+  --color-matsuri-wisteria-dark: #9F1239;
+  --color-matsuri-sakura: #FB7185;
+  --color-matsuri-washi: #FFFFFF;
+  --color-matsuri-text: #FFFFFF;
+  --color-matsuri-subtext: #A1A1AA;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #08080A;
+  color: #FFFFFF;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+}
+
+.font-anime {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.japanese-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+
+/* ==========================================================================
+   Striking Red & Black Anime Festival Theme Styling
+   ========================================================================== */
+
+/* Deep Obsidian Red Ambient Lighting */
+.matsuri-ambient-bg {
+  position: relative;
+  background-color: #08080A;
+  background-image: 
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(220, 38, 38, 0.15), transparent 70%),
+    radial-gradient(circle 600px at 15% 30%, rgba(239, 68, 68, 0.09), transparent 75%),
+    radial-gradient(circle 700px at 85% 75%, rgba(185, 28, 28, 0.09), transparent 80%);
+}
+
+/* Seigaiha (Auspicious Waves 青海波) SVG Background Overlay */
+.seigaiha-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cpath fill='%23EF4444' fill-opacity='0.04' d='M0 0c6.627 0 12 5.373 12 12 0 6.627-5.373 12-12 12H0V0zm24 0c6.627 0 12 5.373 12 12 0 6.627-5.373 12-12 12h-24C6.627 24 12 18.627 12 12 12 5.373 6.627 0 0 0h24zm24 0c6.627 0 12 5.373 12 12 0 6.627-5.373 12-12 12h-24c6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12h24zM12 12c0-3.314-2.686-6-6-6S0 8.686 0 12s2.686 6 6 6 6-2.686 6-6zm24 0c0-3.314-2.686-6-6-6s-6 2.686-6 6 2.686 6 6 6 6-2.686 6-6z'/%3E%3C/svg%3E");
+}
+
+/* Asanoha (Hemp Leaf Lattice 麻の葉) Pattern Overlay */
+.asanoha-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='%23DC2626' fill-opacity='0.035'%3E%3Cpath d='M20 0L40 20L20 40L0 20zM20 5L35 20L20 35L5 20z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Chochin (Paper Lantern Warm Lighting Effect 提灯) */
+.lantern-glow {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.35), inset 0 0 15px rgba(239, 68, 68, 0.2);
+}
+
+.lantern-[#DC2626] {
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.35), inset 0 0 15px rgba(220, 38, 38, 0.2);
+}
+
+/* Traditional Japanese Hanko Seal Stamp (朱印) */
+.hanko-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #EF4444;
+  color: #EF4444;
+  background-color: rgba(239, 68, 68, 0.12);
+  border-radius: 6px;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  padding: 2px 6px;
+  letter-spacing: 0.05em;
+  box-shadow: inset 0 0 4px rgba(239, 68, 68, 0.3);
+}
+
+.hanko-seal-gold {
+  border: 2px solid #DC2626;
+  color: #DC2626;
+  background-color: rgba(220, 38, 38, 0.12);
+  border-radius: 6px;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  padding: 2px 6px;
+  letter-spacing: 0.05em;
+}
+
+/* Gold Foil Accent Border with Corner Notch Effect */
+.matsuri-card {
+  background-color: #121217;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.matsuri-card:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(239, 68, 68, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Washi Paper Cards (Tactile Light Festival Texture) */
+.matsuri-washi-card {
+  background-color: #16161D;
+  background-image: radial-gradient(rgba(239, 68, 68, 0.05) 1px, transparent 0);
+  background-size: 16px 16px;
+  color: #FFFFFF;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Traditional Japanese Corner Frame Flourish */
+.japanese-corner-frame {
+  position: relative;
+}
+.japanese-corner-frame::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid #EF4444;
+  border-left: 2px solid #EF4444;
+  pointer-events: none;
+}
+.japanese-corner-frame::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  border-bottom: 2px solid #EF4444;
+  border-right: 2px solid #EF4444;
+  pointer-events: none;
+}
+
+/* Button Styles - Radiant Red & Black Pills */
+.btn-vermilion {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 50%, #991B1B 100%);
+  color: #FFFFFF;
+  font-weight: 800;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.45);
+  transition: all 0.25s ease-in-out;
+  border-radius: 9999px;
+}
+.btn-vermilion:hover {
+  background: linear-gradient(135deg, #F87171 0%, #EF4444 50%, #B91C1C 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.65);
+}
+
+.btn-matsuri-gold {
+  background: #121217;
+  color: #FFFFFF;
+  font-weight: 700;
+  border: 1.5px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s ease-in-out;
+  border-radius: 9999px;
+}
+.btn-matsuri-gold:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.9);
+  color: #FCA5A5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.25);
+}
+
+.btn-matsuri-purple {
+  background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+  transition: all 0.25s ease-in-out;
+}
+.btn-matsuri-purple:hover {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.55);
+}
+
+/* Backward compatibility classes mapped to elegant festival styles */
+.btn-solid-purple {
+  background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+  transition: all 0.25s ease-in-out;
+}
+.btn-solid-purple:hover {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+}
+
+.btn-solid-magenta {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  transition: all 0.25s ease-in-out;
+}
+.btn-solid-magenta:hover {
+  background: linear-gradient(135deg, #F87171 0%, #EF4444 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.6);
+}
+
+.btn-outline-gojo,
+.btn-outline-red {
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #FFFFFF;
+  transition: all 0.25s ease-in-out;
+}
+.btn-outline-gojo:hover,
+.btn-outline-red:hover {
+  background-color: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.8);
+  color: #FCA5A5;
+  transform: translateY(-2px);
+}
+
+
