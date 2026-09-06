@@ -11,9 +11,17 @@ export const HnmLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#08080A] text-[#FFFFFF] selection:bg-red-600 selection:text-white font-sans matsuri-ambient-bg">
+      {/* Accessible skip link for keyboard & screen reader accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-4 focus:left-4 focus:bg-red-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-white text-xs font-bold uppercase tracking-wider"
+      >
+        Skip to main content
+      </a>
+
       <Navbar />
       
-      <main className="flex-1 pb-20 md:pb-0">
+      <main id="main-content" className="flex-1 pb-20 md:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

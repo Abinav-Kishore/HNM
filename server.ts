@@ -1,9 +1,11 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import Razorpay from 'razorpay';
 import { createServer as createViteServer } from 'vite';
+import { SEO_ROUTES, getSeoMetadata } from './src/seo/routesSeo';
 
 dotenv.config();
 
@@ -175,19 +177,172 @@ app.post('/api/verify-payment', (req, res) => {
   }
 });
 
+// HTML Entity escape helper for safe tag attribute injection
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
+ * SEO Route: robots.txt
+ * Serves clean crawler instructions with sitemap location
+ */
+app.get('/robots.txt', (req, res) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.get('host') || 'localhost:3000';
+  const baseUrl = `${protocol}://${host}`;
+
+  const robotsTxt = [
+    'User-agent: *',
+    'Allow: /',
+    'Disallow: /api/',
+    '',
+    `Sitemap: ${baseUrl}/sitemap.xml`,
+  ].join('\n');
+
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.status(200).send(robotsTxt);
+});
+
+/**
+ * SEO Route: sitemap.xml
+ * Dynamically generated XML sitemap listing all public, indexable festival pages
+ */
+app.get('/sitemap.xml', (req, res) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.get('host') || 'localhost:3000';
+  const baseUrl = `${protocol}://${host}`;
+  const today = new Date().toISOString().split('T')[0];
+
+  const urlEntries = Object.values(SEO_ROUTES)
+    .filter((route) => route.isIndexable)
+    .map((route) => {
+      return `  <url>
+    <loc>${baseUrl}${route.path}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority.toFixed(2)}</priority>
+  </url>`;
+    })
+    .join('\n');
+
+  const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urlEntries}
+</urlset>`;
+
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.status(200).send(sitemapXml);
+});
+
+/**
+ * Unified SEO & Pre-rendered HTML Page Handler
+ * Injects route-specific <title>, <meta>, canonical URLs, Open Graph, Twitter cards,
+ * Schema.org JSON-LD, and pre-rendered semantic HTML inside <div id="root"></div>
+ */
+async function handlePageRequest(req: express.Request, res: express.Response, vite?: any) {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.get('host') || 'localhost:3000';
+  const baseUrl = `${protocol}://${host}`;
+
+  const urlPath = req.path;
+  const seo = getSeoMetadata(urlPath, baseUrl);
+
+  let template: string;
+  try {
+    if (vite) {
+      template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+      template = await vite.transformIndexHtml(req.originalUrl, template);
+    } else {
+      const distPath = path.join(process.cwd(), 'dist');
+      template = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+    }
+  } catch (err: any) {
+    console.error('Error loading index.html template:', err);
+    return res.status(500).send('Internal Server Error loading template');
+  }
+
+  // If this is a valid public SEO route
+  if (seo) {
+    const canonicalUrl = `${baseUrl}${seo.canonicalPath}`;
+    const escapedTitle = escapeHtml(seo.title);
+    const escapedDesc = escapeHtml(seo.description);
+    const escapedKeywords = escapeHtml(seo.keywords.join(', '));
+    const jsonLdData = JSON.stringify(seo.jsonLd(baseUrl), null, 2);
+
+    // Replace <title>
+    template = template.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapedTitle}</title>`);
+
+    // Dynamic metadata tags block
+    const headTags = `
+    <!-- Dynamic SEO & Crawlability Metadata -->
+    <meta name="description" content="${escapedDesc}" />
+    <meta name="keywords" content="${escapedKeywords}" />
+    <link rel="canonical" href="${canonicalUrl}" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta property="og:title" content="${escapedTitle}" />
+    <meta property="og:description" content="${escapedDesc}" />
+    <meta property="og:url" content="${canonicalUrl}" />
+    <meta property="og:type" content="${seo.ogType}" />
+    <meta property="og:site_name" content="Hikari no Matsuri 2027" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapedTitle}" />
+    <meta name="twitter:description" content="${escapedDesc}" />
+    <script type="application/ld+json">
+${jsonLdData}
+    </script>
+`;
+
+    // Inject metadata before </head>
+    template = template.replace('</head>', `${headTags}\n</head>`);
+
+    // Inject pre-rendered semantic HTML content into <div id="root"></div>
+    const prerendered = seo.prerenderedHtml(baseUrl);
+    template = template.replace(
+      '<div id="root"></div>',
+      `<div id="root">\n${prerendered}\n</div>`
+    );
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send(template);
+  }
+
+  // If the path has a file extension (e.g. missing asset), return 404
+  if (path.extname(urlPath)) {
+    return res.status(404).send('Asset not found');
+  }
+
+  // Non-matching HTML route: Return 404 with fallback page
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  return res.status(404).send(template);
+}
+
 // Vite Middleware & Static Serving Setup
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'spa',
+      appType: 'custom',
     });
     app.use(vite.middlewares);
+    app.get('*', async (req, res, next) => {
+      try {
+        await handlePageRequest(req, res, vite);
+      } catch (err) {
+        vite.ssrFixStacktrace(err as Error);
+        next(err);
+      }
+    });
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    // Serve static files, but let HTML navigation routes pass to handlePageRequest
+    app.use(express.static(distPath, { index: false }));
+    app.get('*', async (req, res) => {
+      await handlePageRequest(req, res);
     });
   }
 

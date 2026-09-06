@@ -9,6 +9,7 @@ import { ModalProvider } from './context/ModalContext';
 import { AudioProvider } from './context/AudioContext';
 import { HnmLayout } from './components/layout/HnmLayout';
 import { ScrollToTop } from './components/layout/ScrollToTop';
+import { SeoHead } from './components/common/SeoHead';
 
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
@@ -30,6 +31,7 @@ function ClubMainWrapper() {
 export default function App() {
   return (
     <BrowserRouter>
+      <SeoHead />
       <AudioProvider>
         <ModalProvider>
           <ScrollToTop />
