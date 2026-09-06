@@ -246,12 +246,17 @@ h1, h2, h3, h4, h5, h6 {
   color: #FFFFFF;
   transition: all 0.25s ease-in-out;
 }
-.btn-outline-gojo:hover,
-.btn-outline-red:hover {
-  background-color: rgba(239, 68, 68, 0.18);
-  border-color: rgba(239, 68, 68, 0.8);
-  color: #FCA5A5;
-  transform: translateY(-2px);
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
+
 
 

@@ -1,6 +1,6 @@
 {
   "name": "Isshoni Nihongo & HNM 2026",
-  "description": "Japanese language & culture club website with dedicated Hikari no Matsuri (HNM Vol. 3) single-day festival portal on January 8, 2027.",
+  "description": "Official portal for Hikari no Matsuri Vol. 3, South India's premier Japanese and anime cultural festival on January 8, 2027 at Chennai Institute of Technology in Chennai.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

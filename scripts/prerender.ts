@@ -97,10 +97,16 @@ async function runPrerender() {
     <meta property="og:description" content="${escapedDesc}" />
     <meta property="og:url" content="${canonicalUrl}" />
     <meta property="og:type" content="${seo.ogType}" />
-    <meta property="og:site_name" content="Hikari no Matsuri 2027" />
+    <meta property="og:site_name" content="Hikari no Matsuri" />
+    <meta property="og:image" content="${PRODUCTION_DOMAIN}/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${escapedTitle}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapedTitle}" />
     <meta name="twitter:description" content="${escapedDesc}" />
+    <meta name="twitter:image" content="${PRODUCTION_DOMAIN}/og-image.jpg" />
+    <meta name="twitter:image:alt" content="${escapedTitle}" />
     <script type="application/ld+json">
 ${jsonLdData}
     </script>
