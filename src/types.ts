@@ -71,3 +71,63 @@ export interface FAQItem {
   answer: string;
   category: 'General' | 'Tickets' | 'Cosplay' | 'Vendors' | 'Events' | string;
 }
+
+export interface RazorpayOrderResponse {
+  success: boolean;
+  order_id: string;
+  id?: string;
+  amount: number;
+  currency: string;
+  receipt?: string;
+  key_id?: string;
+  error?: string;
+  message?: string;
+}
+
+export interface RazorpayPaymentSuccessResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+export interface RazorpayVerifyResponse {
+  success: boolean;
+  message: string;
+  order_id?: string;
+  payment_id?: string;
+  error?: string;
+}
+
+export interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description?: string;
+  image?: string;
+  order_id: string;
+  handler: (response: RazorpayPaymentSuccessResponse) => void;
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
+  notes?: Record<string, string>;
+  theme?: {
+    color?: string;
+  };
+  modal?: {
+    ondismiss?: () => void;
+    escape?: boolean;
+    backdropclose?: boolean;
+  };
+}
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayOptions) => {
+      open: () => void;
+      on: (event: string, callback: (response: any) => void) => void;
+    };
+  }
+}

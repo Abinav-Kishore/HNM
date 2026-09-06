@@ -178,7 +178,7 @@ export const TicketsPage: React.FC = () => {
       {/* 3. Digital Pass Information */}
       <section className="py-20 bg-[#08080A]">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-4 gap-6">
             
             <div className="bg-[#121217] p-6 rounded-2xl border border-red-500/20 space-y-3">
               <div className="p-3 bg-red-500/20 text-red-400 rounded-xl w-fit">
@@ -187,6 +187,16 @@ export const TicketsPage: React.FC = () => {
               <h4 className="text-base font-bold text-white font-sans">Instant Digital Pass</h4>
               <p className="text-xs text-zinc-400 leading-relaxed font-sans">
                 Upon booking, receive your instant digital HNM QR entry ticket. Save to phone or present at festival gate.
+              </p>
+            </div>
+
+            <div className="bg-[#121217] p-6 rounded-2xl border border-red-500/20 space-y-3">
+              <div className="p-3 bg-red-500/20 text-red-400 rounded-xl w-fit">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h4 className="text-base font-bold text-white font-sans">Razorpay Standard Checkout</h4>
+              <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                100% secure payment gateway supporting Google Pay, PhonePe, UPI QR, Credit/Debit cards & NetBanking.
               </p>
             </div>
 
