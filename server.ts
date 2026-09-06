@@ -203,7 +203,7 @@ function getBaseUrl(req: express.Request): string {
 
 /**
  * SEO Route: robots.txt
- * Serves clean crawler instructions with sitemap location
+ * Serves clean crawler instructions with sitemap location and AI crawler permissions
  */
 app.get('/robots.txt', (req, res) => {
   const baseUrl = getBaseUrl(req);
@@ -214,11 +214,68 @@ app.get('/robots.txt', (req, res) => {
     'Allow: /',
     'Disallow: /api/',
     '',
+    '# AI Search & Language Model Crawlers',
+    'User-agent: GPTBot',
+    'Allow: /',
+    'Allow: /llms.txt',
+    'Allow: /llms-full.txt',
+    '',
+    'User-agent: ClaudeBot',
+    'Allow: /',
+    'Allow: /llms.txt',
+    'Allow: /llms-full.txt',
+    '',
+    'User-agent: Claude-Web',
+    'Allow: /',
+    'Allow: /llms.txt',
+    'Allow: /llms-full.txt',
+    '',
+    'User-agent: PerplexityBot',
+    'Allow: /',
+    'Allow: /llms.txt',
+    'Allow: /llms-full.txt',
+    '',
+    'User-agent: Google-Extended',
+    'Allow: /',
+    'Allow: /llms.txt',
+    'Allow: /llms-full.txt',
+    '',
+    'User-agent: Applebot-Extended',
+    'Allow: /',
+    'Allow: /llms.txt',
+    'Allow: /llms-full.txt',
+    '',
     `Sitemap: ${sitemapDomain}/sitemap.xml`,
   ].join('\n');
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.status(200).send(robotsTxt);
+});
+
+/**
+ * AI Route: llms.txt
+ * Serves structured markdown documentation for LLMs and AI search engines
+ */
+app.get('/llms.txt', (req, res) => {
+  const filePath = path.resolve(process.cwd(), 'public/llms.txt');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    return res.status(200).send(fs.readFileSync(filePath, 'utf-8'));
+  }
+  res.status(404).send('Not Found');
+});
+
+/**
+ * AI Route: llms-full.txt
+ * Serves comprehensive markdown context for LLMs
+ */
+app.get('/llms-full.txt', (req, res) => {
+  const filePath = path.resolve(process.cwd(), 'public/llms-full.txt');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    return res.status(200).send(fs.readFileSync(filePath, 'utf-8'));
+  }
+  res.status(404).send('Not Found');
 });
 
 /**
