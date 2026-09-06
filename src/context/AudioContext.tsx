@@ -207,7 +207,14 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isMuted, setIsMuted] = useState<boolean>(() => {
-    return localStorage.getItem('hnm_audio_muted') === 'true';
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        return localStorage.getItem('hnm_audio_muted') === 'true';
+      } catch {
+        return false;
+      }
+    }
+    return false;
   });
   const [masterVolume, setMasterVolumeState] = useState<number>(0.8);
   const [voiceVolume, setVoiceVolumeState] = useState<number>(1.0);
@@ -222,7 +229,13 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const sfxAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('hnm_audio_muted', isMuted.toString());
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('hnm_audio_muted', isMuted.toString());
+      } catch {
+        // Ignore storage errors in sandboxed environments
+      }
+    }
   }, [isMuted]);
 
   // Handle Voice Audio instance

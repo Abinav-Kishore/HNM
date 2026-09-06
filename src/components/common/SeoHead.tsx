@@ -28,7 +28,6 @@ export function SeoHead() {
 
       // Update Meta Tags
       updateMetaTag('description', seo.description);
-      updateMetaTag('keywords', seo.keywords.join(', '));
       updateMetaTag('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
 
       // Open Graph Tags

@@ -203,7 +203,7 @@ function getBaseUrl(req: express.Request): string {
 
 /**
  * SEO Route: robots.txt
- * Serves clean crawler instructions with sitemap location and AI crawler permissions
+ * Serves clean, standard crawler instructions with sitemap location
  */
 app.get('/robots.txt', (req, res) => {
   const baseUrl = getBaseUrl(req);
@@ -214,68 +214,11 @@ app.get('/robots.txt', (req, res) => {
     'Allow: /',
     'Disallow: /api/',
     '',
-    '# AI Search & Language Model Crawlers',
-    'User-agent: GPTBot',
-    'Allow: /',
-    'Allow: /llms.txt',
-    'Allow: /llms-full.txt',
-    '',
-    'User-agent: ClaudeBot',
-    'Allow: /',
-    'Allow: /llms.txt',
-    'Allow: /llms-full.txt',
-    '',
-    'User-agent: Claude-Web',
-    'Allow: /',
-    'Allow: /llms.txt',
-    'Allow: /llms-full.txt',
-    '',
-    'User-agent: PerplexityBot',
-    'Allow: /',
-    'Allow: /llms.txt',
-    'Allow: /llms-full.txt',
-    '',
-    'User-agent: Google-Extended',
-    'Allow: /',
-    'Allow: /llms.txt',
-    'Allow: /llms-full.txt',
-    '',
-    'User-agent: Applebot-Extended',
-    'Allow: /',
-    'Allow: /llms.txt',
-    'Allow: /llms-full.txt',
-    '',
     `Sitemap: ${sitemapDomain}/sitemap.xml`,
   ].join('\n');
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.status(200).send(robotsTxt);
-});
-
-/**
- * AI Route: llms.txt
- * Serves structured markdown documentation for LLMs and AI search engines
- */
-app.get('/llms.txt', (req, res) => {
-  const filePath = path.resolve(process.cwd(), 'public/llms.txt');
-  if (fs.existsSync(filePath)) {
-    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-    return res.status(200).send(fs.readFileSync(filePath, 'utf-8'));
-  }
-  res.status(404).send('Not Found');
-});
-
-/**
- * AI Route: llms-full.txt
- * Serves comprehensive markdown context for LLMs
- */
-app.get('/llms-full.txt', (req, res) => {
-  const filePath = path.resolve(process.cwd(), 'public/llms-full.txt');
-  if (fs.existsSync(filePath)) {
-    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-    return res.status(200).send(fs.readFileSync(filePath, 'utf-8'));
-  }
-  res.status(404).send('Not Found');
 });
 
 /**
@@ -309,9 +252,9 @@ ${urlEntries}
 });
 
 /**
- * Unified SEO & Pre-rendered HTML Page Handler
- * Injects route-specific <title>, <meta>, canonical URLs, Open Graph, Twitter cards,
- * Schema.org JSON-LD, and pre-rendered semantic HTML inside <div id="root"></div>
+ * Unified SEO & HTML Page Handler
+ * In production: serves the pre-rendered static HTML file if present.
+ * In development: transforms template with Vite and injects route-specific metadata.
  */
 async function handlePageRequest(req: express.Request, res: express.Response, vite?: any) {
   const baseUrl = getBaseUrl(req);
@@ -319,6 +262,20 @@ async function handlePageRequest(req: express.Request, res: express.Response, vi
 
   const urlPath = req.path;
   const seo = getSeoMetadata(urlPath, canonicalBase);
+
+  // In production, check if a pre-rendered static page exists in dist/
+  if (!vite) {
+    const distPath = path.join(process.cwd(), 'dist');
+    const cleanPath = urlPath === '/' ? '' : urlPath.replace(/^\//, '');
+    const staticFilePath = urlPath === '/' 
+      ? path.join(distPath, 'index.html') 
+      : path.join(distPath, cleanPath, 'index.html');
+
+    if (fs.existsSync(staticFilePath)) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.status(200).sendFile(staticFilePath);
+    }
+  }
 
   let template: string;
   try {
@@ -339,17 +296,15 @@ async function handlePageRequest(req: express.Request, res: express.Response, vi
     const canonicalUrl = `${canonicalBase}${seo.canonicalPath}`;
     const escapedTitle = escapeHtml(seo.title);
     const escapedDesc = escapeHtml(seo.description);
-    const escapedKeywords = escapeHtml(seo.keywords.join(', '));
     const jsonLdData = JSON.stringify(seo.jsonLd(baseUrl), null, 2);
 
     // Replace <title>
     template = template.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapedTitle}</title>`);
 
-    // Dynamic metadata tags block
+    // Clean metadata tags block
     const headTags = `
-    <!-- Dynamic SEO & Crawlability Metadata -->
+    <!-- Dynamic SEO & Social Metadata -->
     <meta name="description" content="${escapedDesc}" />
-    <meta name="keywords" content="${escapedKeywords}" />
     <link rel="canonical" href="${canonicalUrl}" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta property="og:title" content="${escapedTitle}" />
@@ -367,13 +322,6 @@ ${jsonLdData}
 
     // Inject metadata before </head>
     template = template.replace('</head>', `${headTags}\n</head>`);
-
-    // Inject pre-rendered semantic HTML content into <div id="root"></div>
-    const prerendered = seo.prerenderedHtml(baseUrl);
-    template = template.replace(
-      '<div id="root"></div>',
-      `<div id="root">\n${prerendered}\n</div>`
-    );
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(template);

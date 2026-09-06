@@ -1,16 +1,29 @@
 /**
  * Static Site Generation (SSG) Pre-render Script for Vercel & Production
- * Runs after `vite build` to inject route-specific titles, meta descriptions,
- * canonical links, Open Graph, Twitter cards, Schema.org JSON-LD,
- * and semantic HTML for all public routes into static HTML files.
+ * Uses authentic React Server-Side Rendering via src/entry-server.tsx
+ * to generate complete, crawlable HTML pages for all public festival routes.
+ *
+ * Injects:
+ * - Route-specific <title>
+ * - Clean <meta name="description"> (no keyword stuffing)
+ * - Canonical <link rel="canonical">
+ * - Social Cards (Open Graph & Twitter)
+ * - Valid Schema.org JSON-LD structured data
+ * - Full authentic React-rendered DOM inside <div id="root">
+ *
+ * Result: Instant First Contentful Paint with zero layout flicker or perceived redirect,
+ * seamless client hydration, and 100% crawlability for search engines and AI models.
  */
 
 import fs from 'fs';
 import path from 'path';
+import { build as viteBuild } from 'vite';
+import { pathToFileURL } from 'url';
 import { SEO_ROUTES } from '../src/seo/routesSeo';
 
 const PRODUCTION_DOMAIN = 'https://hnm3.vercel.app';
 const distDir = path.resolve(process.cwd(), 'dist');
+const ssrOutputDir = path.resolve(distDir, 'server-render');
 
 function escapeHtml(str: string): string {
   return str
@@ -22,20 +35,44 @@ function escapeHtml(str: string): string {
 }
 
 async function runPrerender() {
-  console.log('[Prerender] Starting SSG Prerender for Vercel deployment...');
+  console.log('[Prerender] Building SSR bundle with Vite...');
+
+  // 1. Build the SSR bundle for entry-server.tsx
+  await viteBuild({
+    build: {
+      ssr: path.resolve(process.cwd(), 'src/entry-server.tsx'),
+      outDir: ssrOutputDir,
+      emptyOutDir: true,
+    },
+    configFile: path.resolve(process.cwd(), 'vite.config.ts'),
+  });
+
+  const ssrModulePath = path.join(ssrOutputDir, 'entry-server.js');
+  if (!fs.existsSync(ssrModulePath)) {
+    throw new Error(`[Prerender] SSR bundle not found at ${ssrModulePath}`);
+  }
+
+  // 2. Import the compiled render function
+  const ssrModule = await import(pathToFileURL(ssrModulePath).href);
+  const renderApp: (url: string) => string = ssrModule.renderApp;
+
+  if (typeof renderApp !== 'function') {
+    throw new Error('[Prerender] renderApp export is missing or not a function');
+  }
 
   const templatePath = path.join(distDir, 'index.html');
   if (!fs.existsSync(templatePath)) {
-    throw new Error(`Base template ${templatePath} not found! Run 'vite build' first.`);
+    throw new Error(`[Prerender] Base template ${templatePath} not found! Run 'vite build' first.`);
   }
 
   const rawTemplate = fs.readFileSync(templatePath, 'utf-8');
+
+  console.log('[Prerender] Generating static HTML for all indexable routes...');
 
   for (const [routePath, seo] of Object.entries(SEO_ROUTES)) {
     const canonicalUrl = `${PRODUCTION_DOMAIN}${seo.canonicalPath}`;
     const escapedTitle = escapeHtml(seo.title);
     const escapedDesc = escapeHtml(seo.description);
-    const escapedKeywords = escapeHtml(seo.keywords.join(', '));
     const jsonLdData = JSON.stringify(seo.jsonLd(PRODUCTION_DOMAIN), null, 2);
 
     let html = rawTemplate;
@@ -43,17 +80,17 @@ async function runPrerender() {
     // 1. Replace <title>
     html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapedTitle}</title>`);
 
-    // 2. Remove any existing meta description / canonical / og tags to avoid duplicates
+    // 2. Remove any template meta description / canonical / og tags
     html = html.replace(/<meta\s+name="description"[^>]*>/gi, '');
+    html = html.replace(/<meta\s+name="keywords"[^>]*>/gi, '');
     html = html.replace(/<link\s+rel="canonical"[^>]*>/gi, '');
     html = html.replace(/<meta\s+property="og:[^>]*>/gi, '');
     html = html.replace(/<meta\s+name="twitter:[^>]*>/gi, '');
 
-    // 3. Inject full SEO head block
+    // 3. Inject clean standards-based SEO head block
     const headInjection = `
-    <!-- Production SEO & Social Cards -->
+    <!-- Canonical & SEO Metadata -->
     <meta name="description" content="${escapedDesc}" />
-    <meta name="keywords" content="${escapedKeywords}" />
     <link rel="canonical" href="${canonicalUrl}" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta property="og:title" content="${escapedTitle}" />
@@ -71,14 +108,14 @@ ${jsonLdData}
 
     html = html.replace('</head>', `${headInjection}\n</head>`);
 
-    // 4. Inject semantic HTML inside <div id="root"></div>
-    const prerenderedContent = seo.prerenderedHtml(PRODUCTION_DOMAIN);
+    // 4. Render real React SSR markup inside <div id="root">
+    const appMarkup = renderApp(routePath);
     html = html.replace(
       '<div id="root"></div>',
-      `<div id="root">\n${prerenderedContent}\n</div>`
+      `<div id="root">${appMarkup}</div>`
     );
 
-    // 5. Determine target file path
+    // 5. Write to target path
     let targetFilePath: string;
     if (routePath === '/') {
       targetFilePath = path.join(distDir, 'index.html');
@@ -92,34 +129,30 @@ ${jsonLdData}
     }
 
     fs.writeFileSync(targetFilePath, html, 'utf-8');
-    console.log(`[Prerender] Generated static page for route: ${routePath} -> ${path.relative(process.cwd(), targetFilePath)}`);
+    console.log(`[Prerender] ✓ Generated: ${routePath} -> ${path.relative(process.cwd(), targetFilePath)}`);
   }
 
-  // Generate 404.html
+  // 6. Generate clean 404.html
   const notFoundHtml = rawTemplate.replace(
     /<title>[\s\S]*?<\/title>/i,
     '<title>404 - Page Not Found | Hikari no Matsuri 2027</title>'
   ).replace(
     '</head>',
     '<meta name="robots" content="noindex, follow" />\n</head>'
-  ).replace(
-    '<div id="root"></div>',
-    `<div id="root">
-      <div class="min-h-screen bg-[#08080A] text-white flex flex-col items-center justify-center p-8 text-center font-sans">
-        <span class="text-xs font-mono text-red-500 uppercase tracking-widest bg-red-950/60 border border-red-500/30 px-3 py-1 rounded-full mb-4">Error 404</span>
-        <h1 class="text-4xl font-extrabold mb-2">Page Not Found</h1>
-        <p class="text-zinc-400 max-w-md mb-6">The requested page does not exist or has moved. Return to the festival portal.</p>
-        <a href="/" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-colors">Return to Home</a>
-      </div>
-    </div>`
   );
   fs.writeFileSync(path.join(distDir, '404.html'), notFoundHtml, 'utf-8');
-  console.log('[Prerender] Generated 404.html');
+  console.log('[Prerender] ✓ Generated: /404.html');
 
-  console.log('[Prerender] SSG Prerendering completed successfully for all routes!');
+  // 7. Clean up temporary SSR bundle
+  if (fs.existsSync(ssrOutputDir)) {
+    fs.rmSync(ssrOutputDir, { recursive: true, force: true });
+    console.log('[Prerender] Cleaned up temporary SSR build artifacts');
+  }
+
+  console.log('[Prerender] All static pre-rendered routes generated successfully!');
 }
 
 runPrerender().catch((err) => {
-  console.error('[Prerender] Failed:', err);
+  console.error('[Prerender] Fatal error:', err);
   process.exit(1);
 });
