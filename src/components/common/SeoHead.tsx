@@ -6,7 +6,9 @@ export function SeoHead() {
   const location = useLocation();
 
   useEffect(() => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const PRODUCTION_ORIGIN = 'https://hnm3.vercel.app';
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const origin = isLocalhost ? window.location.origin : PRODUCTION_ORIGIN;
     const seo = getSeoMetadata(location.pathname, origin);
 
     if (seo) {

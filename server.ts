@@ -187,21 +187,34 @@ function escapeHtml(str: string): string {
     .replace(/>/g, '&gt;');
 }
 
+const PRODUCTION_DOMAIN = 'https://hnm3.vercel.app';
+
+function getBaseUrl(req: express.Request): string {
+  if (process.env.CANONICAL_DOMAIN) {
+    return process.env.CANONICAL_DOMAIN;
+  }
+  const host = req.get('host') || '';
+  if (host.includes('localhost') || host.includes('127.0.0.1')) {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    return `${protocol}://${host}`;
+  }
+  return PRODUCTION_DOMAIN;
+}
+
 /**
  * SEO Route: robots.txt
  * Serves clean crawler instructions with sitemap location
  */
 app.get('/robots.txt', (req, res) => {
-  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  const host = req.get('host') || 'localhost:3000';
-  const baseUrl = `${protocol}://${host}`;
+  const baseUrl = getBaseUrl(req);
+  const sitemapDomain = (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) ? baseUrl : PRODUCTION_DOMAIN;
 
   const robotsTxt = [
     'User-agent: *',
     'Allow: /',
     'Disallow: /api/',
     '',
-    `Sitemap: ${baseUrl}/sitemap.xml`,
+    `Sitemap: ${sitemapDomain}/sitemap.xml`,
   ].join('\n');
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -213,16 +226,15 @@ app.get('/robots.txt', (req, res) => {
  * Dynamically generated XML sitemap listing all public, indexable festival pages
  */
 app.get('/sitemap.xml', (req, res) => {
-  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  const host = req.get('host') || 'localhost:3000';
-  const baseUrl = `${protocol}://${host}`;
+  const baseUrl = getBaseUrl(req);
+  const sitemapDomain = (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) ? baseUrl : PRODUCTION_DOMAIN;
   const today = new Date().toISOString().split('T')[0];
 
   const urlEntries = Object.values(SEO_ROUTES)
     .filter((route) => route.isIndexable)
     .map((route) => {
       return `  <url>
-    <loc>${baseUrl}${route.path}</loc>
+    <loc>${sitemapDomain}${route.path}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
     <priority>${route.priority.toFixed(2)}</priority>
@@ -245,12 +257,11 @@ ${urlEntries}
  * Schema.org JSON-LD, and pre-rendered semantic HTML inside <div id="root"></div>
  */
 async function handlePageRequest(req: express.Request, res: express.Response, vite?: any) {
-  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  const host = req.get('host') || 'localhost:3000';
-  const baseUrl = `${protocol}://${host}`;
+  const baseUrl = getBaseUrl(req);
+  const canonicalBase = (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) ? baseUrl : PRODUCTION_DOMAIN;
 
   const urlPath = req.path;
-  const seo = getSeoMetadata(urlPath, baseUrl);
+  const seo = getSeoMetadata(urlPath, canonicalBase);
 
   let template: string;
   try {
@@ -268,7 +279,7 @@ async function handlePageRequest(req: express.Request, res: express.Response, vi
 
   // If this is a valid public SEO route
   if (seo) {
-    const canonicalUrl = `${baseUrl}${seo.canonicalPath}`;
+    const canonicalUrl = `${canonicalBase}${seo.canonicalPath}`;
     const escapedTitle = escapeHtml(seo.title);
     const escapedDesc = escapeHtml(seo.description);
     const escapedKeywords = escapeHtml(seo.keywords.join(', '));
